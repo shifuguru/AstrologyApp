@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="AstrologyCore">
+      <UniqueIdentifier>{835dd8bc-e297-4f22-9a60-4a9e6d676dd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps">
+      <UniqueIdentifier>{f1abc7a9-df4d-4c3a-8c8e-47b3514c2a67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{ec187c27-c5c0-4de7-943c-bf507003fd95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="examples">
+      <UniqueIdentifier>{f37fa2f1-b49b-482e-9532-77423befc54b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\swe">
+      <UniqueIdentifier>{a8844404-c1be-48d7-b702-3206bf5a9308}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Astrology.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swecl.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swedate.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swehouse.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swejpl.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swemplan.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\sweph.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swephlib.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\swe\swemmoon.c">
+      <Filter>deps\swe</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="deps\swe\swedate.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swedll.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\sweephe4.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swehouse.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swejpl.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swemptab.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swenut2000a.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\sweodef.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\sweph.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swephexp.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swephlib.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\swe\swevents.h">
+      <Filter>deps\swe</Filter>
+    </ClInclude>
+    <ClInclude Include="Astrology.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
