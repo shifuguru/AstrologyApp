@@ -102,12 +102,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Admin\source\repos\Astrology\deps\swe;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Admin\source\repos\Astrology\src;C:\Users\Admin\source\repos\Astrology\third_party\imgui\backends;C:\Users\Admin\source\repos\Astrology\third_party\imgui;C:\Users\Admin\source\repos\Astrology\deps\swe;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,7 +126,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Astrology.cpp" />
     <ClCompile Include="deps\swe\swecl.c" />
     <ClCompile Include="deps\swe\swedate.c" />
     <ClCompile Include="deps\swe\swehouse.c" />
@@ -134,9 +134,16 @@
     <ClCompile Include="deps\swe\swemplan.c" />
     <ClCompile Include="deps\swe\sweph.c" />
     <ClCompile Include="deps\swe\swephlib.c" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="third_party\imgui\imgui.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="ui_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Astrology.h" />
     <ClInclude Include="deps\swe\swedate.h" />
     <ClInclude Include="deps\swe\swedll.h" />
     <ClInclude Include="deps\swe\sweephe4.h" />
@@ -149,6 +156,7 @@
     <ClInclude Include="deps\swe\swephexp.h" />
     <ClInclude Include="deps\swe\swephlib.h" />
     <ClInclude Include="deps\swe\swevents.h" />
+    <ClInclude Include="src\Gazetteer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

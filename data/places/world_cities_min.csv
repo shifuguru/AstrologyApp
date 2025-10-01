@@ -1,0 +1,16 @@
+name,admin,country,lat,lon,tzid
+Palmerston North,Manawatu-Whanganui,New Zealand,-40.3564,175.6111,Pacific/Auckland
+Wellington,,New Zealand,-41.2865,174.7762,Pacific/Auckland
+Auckland,,New Zealand,-36.8485,174.7633,Pacific/Auckland
+Christchurch,Canterbury,New Zealand,-43.532,172.6306,Pacific/Auckland
+Dunedin,Otago,New Zealand,-45.8788,170.5028,Pacific/Auckland
+Hamilton,Waikato,New Zealand,-37.7833,175.2833,Pacific/Auckland
+Tauranga,Bay of Plenty,New Zealand,-37.6861,176.1667,Pacific/Auckland
+Sydney,NSW,Australia,-33.8688,151.2093,Australia/Sydney
+Melbourne,VIC,Australia,-37.8136,144.9631,Australia/Melbourne
+Brisbane,QLD,Australia,-27.4698,153.0251,Australia/Brisbane
+London,England,United Kingdom,51.5074,-0.1278,Europe/London
+Leeds,England,United Kingdom,53.79648,-1.54785,Europe/London
+New York,NY,United States,40.7128,-74.006,America/New_York
+Los Angeles,CA,United States,34.0522,-118.2437,America/Los_Angeles
+Chicago,IL,United States,41.8781,-87.6298,America/Chicago

@@ -28,11 +28,11 @@
     <Filter Include="deps\swe">
       <UniqueIdentifier>{a8844404-c1be-48d7-b702-3206bf5a9308}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{d0b76603-41cc-44d1-a3e5-7bc448ef5a36}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Astrology.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="deps\swe\swecl.c">
       <Filter>deps\swe</Filter>
     </ClCompile>
@@ -56,6 +56,30 @@
     </ClCompile>
     <ClCompile Include="deps\swe\swemmoon.c">
       <Filter>deps\swe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ui_main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -95,8 +119,8 @@
     <ClInclude Include="deps\swe\swevents.h">
       <Filter>deps\swe</Filter>
     </ClInclude>
-    <ClInclude Include="Astrology.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="src\Gazetteer.hpp">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
