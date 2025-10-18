@@ -81,6 +81,25 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>REM Ensure worker folder exists
+mkdir "C:\Users\Admin\AstroApi\worker" 2&gt;nul
+mkdir "C:\Users\Admin\AstroApi\worker\data\ephe" 2&gt;nul
+
+REM Copy the EXE that was just built
+copy /Y "$(TargetPath)" "C:\Users\Admin\AstroApi\worker\Astrology.exe"
+
+REM Copy runtime DLLs next to the EXE (adjust names if yours differ)
+copy /Y "$(TargetDir)date-tz.dll"  "C:\Users\Admin\AstroApi\worker\"
+copy /Y "$(TargetDir)libcurl-d.dll" "C:\Users\Admin\AstroApi\worker\"
+copy /Y "$(TargetDir)zlibd1.dll"    "C:\Users\Admin\AstroApi\worker\"
+REM Swiss ephemeris DLLs (if they’re in your TargetDir)
+copy /Y "$(TargetDir)swe*.dll"      "C:\Users\Admin\AstroApi\worker\"
+
+REM Copy ephemeris data (recursive, quiet)
+xcopy /I /E /Y /Q "$(ProjectDir)data\ephe" "C:\Users\Admin\AstroApi\worker\data\ephe\"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -110,6 +129,25 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>REM Ensure worker folder exists
+mkdir "C:\Users\Admin\AstroApi\worker" 2&gt;nul
+mkdir "C:\Users\Admin\AstroApi\worker\data\ephe" 2&gt;nul
+
+REM Copy the EXE that was just built
+copy /Y "$(TargetPath)" "C:\Users\Admin\AstroApi\worker\Astrology.exe"
+
+REM Copy runtime DLLs next to the EXE (adjust names if yours differ)
+copy /Y "$(TargetDir)date-tz.dll"  "C:\Users\Admin\AstroApi\worker\"
+copy /Y "$(TargetDir)libcurl-d.dll" "C:\Users\Admin\AstroApi\worker\"
+copy /Y "$(TargetDir)zlibd1.dll"    "C:\Users\Admin\AstroApi\worker\"
+REM Swiss ephemeris DLLs (if they’re in your TargetDir)
+copy /Y "$(TargetDir)swe*.dll"      "C:\Users\Admin\AstroApi\worker\"
+
+REM Copy ephemeris data (recursive, quiet)
+xcopy /I /E /Y /Q "$(ProjectDir)data\ephe" "C:\Users\Admin\AstroApi\worker\data\ephe\"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

@@ -1,0 +1,83 @@
+🧩 You have three “parts” now
+Component	          Purpose	          Location
+Astrology.exe	      The compiled Swiss Ephemeris worker that does the actual chart maths	C:\Users\Admin\AstroApi\worker\Astrology.exe
+AstroApi (ASP.NET)	The API that talks to the worker and sends JSON back to your app	C:\Users\Admin\AstroApi
+Expo App	         The mobile app that talks to the API	e.g. C:\Users\Admin\ExpoProjects\AstroMobile
+
+
+🪜 Step-by-step routine (this is your “run everything” checklist)
+
+
+🧱 1. Open PowerShell
+
+You can open one for each part, or use tabs like you already do (perfect).
+
+
+⚙️ 2. Run the API
+
+This needs to be running before the mobile app can talk to it.
+
+cd C:\Users\Admin\AstroApi
+dotnet run
+
+✅ Expected output:
+
+Now listening on: http://0.0.0.0:5080
+Application started...
+
+Keep this window open.
+
+
+🪶 3. Test that the API works
+
+Open a new PowerShell tab (so you don’t close the API).
+
+Invoke-RestMethod http://localhost:5080/chart -Method Post -ContentType application/json -Body '{
+  "name":"Test","date":"1996-02-12","time":"16:20",
+  "city":"Wellington, NZ","lat":-41.28664,"lon":174.77557,"hsys":"P"
+}' | ConvertTo-Json -Depth 6
+
+✅ You should see a JSON response with summary, planets, and houses.
+
+That proves the backend is working.
+
+
+📱 4. Run the mobile app
+
+Now you need the Expo app running (so your phone can connect).
+
+cd C:\Users\Admin\ExpoProjects\AstroMobile
+npx expo start
+
+
+✅ You’ll see:
+
+A QR code in your terminal (and/or a browser window opens showing Expo Dev Tools).
+
+Your LAN IP address, e.g. exp://192.168.1.103:19000
+
+Scan that QR code with Expo Go on your phone.
+
+🌐 5. Tell the mobile app where to find the API
+
+In your React Native (Expo) project, open the file where you fetch data — probably something like App.tsx or ChartScreen.tsx.
+
+Find your fetch line and change:
+
+const API_URL = "http://192.168.1.103:5080/chart";
+
+
+(Replace with your actual IP from step 4 — not localhost.)
+
+🧪 6. Test from the mobile app
+
+Tap your “Compute” button or however you trigger the chart.
+✅ It should now hit the API → run the C++ worker → return your JSON chart data.
+
+If something fails:
+
+If the app says “network error,” it usually means the IP is wrong.
+
+If it says “500 internal error,” it means the API crashed (check that PowerShell tab).
+
+If it works, you’ll see the same chart data the PowerShell test showed earlier.

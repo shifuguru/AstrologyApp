@@ -8,6 +8,11 @@
 #  undef max
 #endif
 
+#include <windows.h>
+#include <shellapi.h> // for CommandLineToArgvW
+#pragma comment(lib, "Shell32.lib")
+#include <cstdio>
+
 #include <algorithm>
 #include <chrono>
 #include <date/date.h>
@@ -37,20 +42,59 @@ extern "C" {
 // ==== BEGIN: Paste the SAME helpers + AstrologyChart from your working console version ====
 // Keep these declarations in a shared header if you prefer.
 
+// very tiny argv -> string finder
+static bool has_flag(int argc, wchar_t** argv, const wchar_t* flag)
+{
+    for (int i = 0; i< argc; ++i)
+		if (wcscmp(argv[i], flag) == 0) return true;
+	return false;
+}
+static std::wstring arg_after(int argc, wchar_t** argv, const wchar_t* flag, const wchar_t* def = L"")
+{
+    for (int i = 0; i < argc - 1; ++i)
+        if (wcscmp(argv[i], flag) == 0) return argv[i + 1];
+    return def;
+}
+
+// convert wstring -> double/int safely
+static double wstod_safe(const std::wstring& s, double def = 0.0)
+{
+    try { return std::stod(s); }
+    catch (...) { return def; }
+}
+static int wstoi_safe(const std::wstring& s, int def = 0)
+{
+    try { return std::stoi(s); }
+    catch (...) { return def; }
+}
+
+// format longitude like the UI
+static std::string fmtLonPretty(double lonDeg)
+{
+	lonDeg = fmod(lonDeg, 360.0); if (lonDeg < 0) lonDeg += 360.0;
+	static const char* SIGN_NAMES[12] = { "Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces" };
+    int sign = int(lonDeg / 30.0);
+	double within = lonDeg - sign * 30.0;
+	int d = (int)floor(within);
+	int m = (int)floor((within - d) * 60.0 + 1e-9);
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%s %d°%02d'", SIGN_NAMES[sign], d, m);
+	return std::string(buf);
+}
+
 static inline double norm360(double x) { double y = fmod(x, 360.0); if (y < 0) y += 360.0; return y; }
 struct DMS { int deg; int min; double sec; };
 static DMS toDMS(double degrees) { double d = floor(degrees); double mfull = (degrees - d) * 60.0; double m = floor(mfull); double s = (mfull - m) * 60.0; return { (int)d,(int)m,s }; }
 static const char* SIGN_NAMES[12] = { "Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces" };
 static inline float deg2rad(float deg) { return deg * (float)M_PI / 180.0f; }
-static inline ImVec2 polar(const ImVec2& C, float R, float angRad) {
+static inline ImVec2 polar(const ImVec2& C, float R, float angRad)
+{
 	return ImVec2(C.x + R * cosf(angRad), C.y + R * sinf(angRad));
 }
 
 // Project ecliptic longitude to screen angle.
 // We rotate the wheel so that the Ascendant (1st house cusp) is on the left (9 o'clock).
 // i.e. screenAngle = (planetLon - ASC) and then rotate -90 degrees to have ASC on the left.
-// Feel free to tweak to your taste.
-
 static inline float ecl_to_screen_angle(float ecl_deg, float asc_deg)
 {
 	// angle of point relative to ascendant
@@ -202,13 +246,54 @@ static void DrawColorSwatch(ImU32 col, const ImVec2& size = ImVec2(18, 3)) {
     ImGui::GetWindowDrawList()->AddRectFilled(p0, p1, col, 2.0f);
 }
 
-auto places = load_places_csv("data/places/world_cities_min.csv");
+// --- City search helpers ---
+std::vector<Place> gPlacesPrimary = load_places_csv("data/places/world_cities_min.csv");
+std::vector<Place> gPlacesExtended;
+static bool gExtendedLoaded = false;
+
+// UI state
 static char cityQuery[128] = "";
 static std::vector<int> cityHits;
 static int selectedCity = -1;
-// NEW: treat typed time as local by default + remember the city's tzid
 static bool gInputIsLocal = true;
 static std::string gSelectedTzid = "UTC";
+
+// Which container produced the current hits
+static const std::vector<Place>* gHitsSource = &gPlacesPrimary;
+
+// One search that falls back to extended if needed
+static void search_places_with_fallback(const char* query, std::vector<int>& hits)
+{
+	hits.clear();
+    gHitsSource = &gPlacesPrimary;
+
+	if (!query || !*query) return;
+
+	find_places(gPlacesPrimary, query, hits);
+	if (!hits.empty()) return;
+
+    // fallback
+    if (!gExtendedLoaded)
+    {
+        gPlacesExtended = load_places_csv("data/places/world_cities_extended.csv");
+		gExtendedLoaded = true;
+    }
+
+	find_places(gPlacesExtended, query, hits);
+	if (!hits.empty()) gHitsSource = &gPlacesExtended;
+}
+
+bool search_place(const char* query, std::vector<int>& hits)
+{
+	find_places(gPlacesPrimary, query, hits);
+    if (hits.empty() && !gPlacesExtended.empty())
+    {
+        find_places(gPlacesExtended, query, hits);
+	}
+	return !hits.empty();
+}
+
+auto places = load_places_csv("data/places/world_cities_min.csv");
 
 static std::string fmtLongitude(double lon, bool asciiDegrees = false) {
     lon = norm360(lon);
@@ -239,37 +324,167 @@ public:
         : Y(Y), M(M), D(D), hour(hour_utc), lat(lat_deg), lon(lon_deg), hsys(hsys) {
         jd_ut = swe_julday(Y, M, D, hour, SE_GREG_CAL);
     }
-    void compute() { computePlanets(); computeHouses(); }
+    void compute() { ComputePlanets(); ComputeHouses(); }
     const std::vector<Body>& getBodies() const { return bodies; }
     const Houses& getHouses() const { return H; }
     double getJDUT() const { return jd_ut; }
     char getHouse() const { return hsys; }
 private:
     int Y, M, D; double hour, lat, lon; char hsys; double jd_ut{}; std::vector<Body> bodies; Houses H{};
-    void computePlanets() {
-        static const int kBodies[] = { SE_SUN,SE_MOON,SE_MERCURY,SE_VENUS,SE_MARS,SE_JUPITER,SE_SATURN,SE_URANUS,SE_NEPTUNE,SE_PLUTO,SE_TRUE_NODE,SE_CHIRON,SE_MEAN_APOG };
+    void ComputePlanets() {
+        static const int kBodies[] = { 
+            SE_SUN,SE_MOON,SE_MERCURY,SE_VENUS,SE_MARS,
+            SE_JUPITER,SE_SATURN,SE_URANUS,SE_NEPTUNE,SE_PLUTO,
+            SE_TRUE_NODE,SE_CHIRON,SE_MEAN_APOG // Lilith
+        };
+
         bodies.clear();
+
         for (int ipl : kBodies) {
-            double xx[6]; char serr[256] = { 0 };
+            double xx[6]; char serr[256] = {0};
             int rc = swe_calc_ut(jd_ut, ipl, SEFLG_SWIEPH | SEFLG_SPEED, xx, serr);
-            if (rc < 0) throw std::runtime_error(std::string("swe_calc_ut: ") + serr);
+
+            if (rc < 0)
+            {
+                // Do NOT crash the whole run for optional points
+                if (ipl == SE_CHIRON || ipl == SE_MEAN_APOG || ipl == SE_TRUE_NODE)
+                {
+                    // Optional log once:
+                    fprintf(stderr, "warn: swe_calc_ut failed for %d: %s\n", ipl, serr);
+                    continue;
+                }
+                throw std::runtime_error(std::string("swe_calc_ut: ") + serr);
+            }
+
             Body b;
             switch (ipl) {
-            case SE_SUN: b.name = "Sun"; break; case SE_MOON: b.name = "Moon"; break; case SE_MERCURY: b.name = "Mercury"; break;
-            case SE_VENUS: b.name = "Venus"; break; case SE_MARS: b.name = "Mars"; break; case SE_JUPITER: b.name = "Jupiter"; break;
-            case SE_SATURN: b.name = "Saturn"; break; case SE_URANUS: b.name = "Uranus"; break; case SE_NEPTUNE: b.name = "Neptune"; break;
-            case SE_PLUTO: b.name = "Pluto"; break; case SE_TRUE_NODE: b.name = "True Node"; break; case SE_CHIRON: b.name = "Chiron"; break;
-            case SE_MEAN_APOG: b.name = "Lilith"; break; default: b.name = "Body"; break;
+                case SE_SUN: b.name = "Sun"; break; case SE_MOON: b.name = "Moon"; break; 
+                case SE_MERCURY: b.name = "Mercury"; break; case SE_VENUS: b.name = "Venus"; break; 
+                case SE_MARS: b.name = "Mars"; break; case SE_JUPITER: b.name = "Jupiter"; break;
+                case SE_SATURN: b.name = "Saturn"; break; case SE_URANUS: b.name = "Uranus"; break; 
+                case SE_NEPTUNE: b.name = "Neptune"; break; case SE_PLUTO: b.name = "Pluto"; break; 
+                case SE_TRUE_NODE: b.name = "True Node"; break; 
+                case SE_CHIRON: b.name = "Chiron"; break;
+                case SE_MEAN_APOG: b.name = "Lilith"; break; 
+                default: b.name = "Body"; break;
             }
             b.lon = norm360(xx[0]); b.lat = xx[1]; b.speed = xx[3]; b.retro = (xx[3] < 0);
             bodies.push_back(b);
         }
     }
-    void computeHouses() {
+    void ComputeHouses() {
         int rc = swe_houses_ex(jd_ut, SEFLG_SWIEPH, lat, lon, hsys, H.cusps, H.ascmc);
         if (rc == -1) throw std::runtime_error("swe_houses_ex failed");
     }
 };
+
+// HEADLESS runner: returns true if it handled JSON mode
+static bool RunJsonModeIfRequested(int argc, wchar_t** argv)
+{
+    if (!has_flag(argc, argv, L"--json")) return false;
+
+    // Parse args
+    // --date YYYY-MM-DD --time HH:MM --lat <deg> --lon <deg> --hsys P | W | E | K
+    std::wstring wdate = arg_after(argc, argv, L"--date");
+    std::wstring wtime = arg_after(argc, argv, L"--time");
+    std::wstring wlat = arg_after(argc, argv, L"--lat");
+    std::wstring wlon = arg_after(argc, argv, L"--lon");
+    std::wstring whsys = arg_after(argc, argv, L"--hsys", L"P");
+
+    // Default ephemeris path if passed as --ephe
+    std::wstring wephe = arg_after(argc, argv, L"--ephe");
+    std::string EPHE_PATH;
+    if (!wephe.empty())
+    {
+        std::wstring ws = wephe;
+        EPHE_PATH = std::string(ws.begin(), ws.end());
+    }
+    else
+    {
+        EPHE_PATH = "../data/ephe"; // <- adjust if needed
+    }
+    swe_set_ephe_path(EPHE_PATH.c_str());
+
+    // Optional: write JSON to a file instead of stdout (works for GUI subsystem)
+    std::wstring wout = arg_after(argc, argv, L"--out");
+    FILE* outfp = stdout;
+    if (!wout.empty()) {
+        std::string outPath(wout.begin(), wout.end());
+        FILE* fp = nullptr;
+        if (fopen_s(&fp, outPath.c_str(), "wb") == 0 && fp) {
+            outfp = fp;
+        }
+    }
+    // convenience macro so we don't edit every line
+    #define OUT(...) fprintf(outfp, __VA_ARGS__)
+
+    // Split date/time
+    int Y = 0, M = 0, D = 0, hh = 12, mm = 0, ss = 0;
+    if (wdate.size() >= 10)
+    {
+        Y = wstoi_safe(wdate.substr(0, 4));
+        M = wstoi_safe(wdate.substr(5, 2));
+        D = wstoi_safe(wdate.substr(8, 2));
+    }
+    if (wtime.size() >= 5)
+    {
+        hh = wstoi_safe(wtime.substr(0, 2));
+        mm = wstoi_safe(wtime.substr(3, 2));
+        if (wtime.size() >= 8)
+            ss = wstoi_safe(wtime.substr(6, 2));
+    }
+    double hour_utc = hh + mm / 60.0 + ss / 3600.0;
+
+    // Read coords & house
+    double lat = wstod_safe(wlat, -41.28664); // default: Wellington
+    double lon = wstod_safe(wlon, 174.77557);
+    char hsys = whsys.empty() ? 'P' : (char)whsys[0];
+
+    try
+    {
+        AstrologyChart chart(Y, M, D, hour_utc, lat, lon, hsys);
+        chart.compute();
+
+        // Build very small JSON (no external dependencies)
+        const auto& bodies = chart.getBodies();
+        const auto& H = chart.getHouses();
+
+        // Print JSON to stdout only (no UI)
+        OUT("{\"summary\":\"Natal chart @ %04d-%02d-%02d %02d:%02d\",", Y, M, D, hh, mm);
+
+        // planets
+        OUT("\"planets\":[");
+        for (size_t i = 0; i < bodies.size(); ++i)
+        {
+            const auto& b = bodies[i];
+            std::string pos = fmtLonPretty(b.lon);
+            OUT("{\"body\":\"%s\",\"pos\":\"%s\",\"retro\":%s}%s",
+                b.name.c_str(), pos.c_str(), b.retro ? "true" : "false", (i + 1 < bodies.size()) ? "," : "");
+        }
+        OUT("],");
+
+        // houses
+        OUT("\"houses\":[");
+        for (int i = 1; i <= 12; ++i)
+        {
+            std::string cusp = fmtLonPretty(H.cusps[i]);
+            OUT("{\"n\":%d,\"cusp\":\"%s\"}%s", i, cusp.c_str(), (i < 12) ? "," : "");
+        }
+        OUT("]}");
+        fflush(outfp);
+        if (outfp != stdout) fclose(outfp);
+        ExitProcess(0);
+    }
+    catch (const std::exception& e)
+    {
+        // If something explodes, print a single-line JSON error (so API can surface it)
+        fprintf(stderr, "error: %s\n", e.what());
+        fflush(stderr);
+        ExitProcess(1); // Ensure process returns non-zero in JSON mode on error
+    }
+    return true; // handled
+}
+
 
 // ==== END: helpers + class ====
 
@@ -345,7 +560,22 @@ static bool LocalToUTC(const std::string& tzid, int Y, int M, int D, int hh, int
     }
 }
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR /*lpCmdLine*/, _In_ int nCmdShow) {
+	// turn command line into argc/argv for our tiny parser
+	int argc = 0;
+    LPWSTR* argv = ::CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (argv)
+    {
+        if (RunJsonModeIfRequested(argc, argv))
+        {
+            // JSON mode handled: no window, just exit
+            LocalFree(argv);
+			swe_close(); // cleanup Swiss Ephemeris
+            return 0; // done in JSON mode
+		}
+		LocalFree(argv);
+    }    
+    
     // Ephemeris path (adjust to yours)
     const char* EPHE_PATH = "C:/Users/Admin/source/repos/Astrology/data/ephe";
     swe_set_ephe_path(EPHE_PATH);
@@ -370,7 +600,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     date::reload_tzdb();   // safe to call; ensures tzdb is present/updated
 
     // Input state
-    char ts[32] = "1996-02-12 16:20:00";  // UTC
+    char ts[32] = "2000-01-01 12:00:00";  // UTC
     double lat = 53.79648, lon = -1.54785;
     int houseIdx = 0; const char* houseLabels[] = { "Placidus (P)", "Whole Sign (W)", "Equal (E)", "Koch (K)" };
     char hsys = 'P';
@@ -391,17 +621,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         ImGui::NewFrame();
 
 		// Full-screen, non-draggable window that follows the host window size
-#ifdef IMGUI_HAS_VIEWPORT
-		ImGuiViewport* vp = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(vp->WorkPos);
-		ImGui::SetNextWindowSize(vp->WorkSize);
-		ImGui::SetNextWindowViewport(vp->ID);
-#else
-		// Fallback for older Dear ImGui versions without multi-viewport support
-		ImGuiIO& io = ImGui::GetIO();
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(io.DisplaySize);
-#endif
+        #ifdef IMGUI_HAS_VIEWPORT
+		        ImGuiViewport* vp = ImGui::GetMainViewport();
+                ImGui::SetNextWindowPos(vp->WorkPos);
+		        ImGui::SetNextWindowSize(vp->WorkSize);
+		        ImGui::SetNextWindowViewport(vp->ID);
+        #else
+		        // Fallback for older Dear ImGui versions without multi-viewport support
+		        ImGuiIO& io = ImGui::GetIO();
+                ImGui::SetNextWindowPos(ImVec2(0, 0));
+                ImGui::SetNextWindowSize(io.DisplaySize);
+        #endif
 
         ImGuiWindowFlags topFlags =
             ImGuiWindowFlags_NoDecoration
